@@ -1,7 +1,7 @@
 // backend/server.js
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch'); // Node <18, nếu Node 18+ có thể dùng global fetch
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 const app = express();
@@ -10,11 +10,10 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Lấy API key từ biến môi trường (an toàn)
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // Đổi tên biến
 
-if (!OPENAI_API_KEY) {
-  console.error('❌ Thiếu OPENAI_API_KEY trong file .env');
+if (!OPENROUTER_API_KEY) {
+  console.error('❌ Thiếu OPENROUTER_API_KEY trong file .env');
   process.exit(1);
 }
 
@@ -27,14 +26,16 @@ Dữ liệu hiện tại: Mục tiêu: ${context.target} VND, Tiết kiệm/thá
 Trả lời ngắn gọn, cụ thể, có số liệu. Nếu câu hỏi ngoài tài chính, lịch sự từ chối.`;
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': 'https://your-app.vercel.app', // Thay bằng URL frontend của bạn
+        'X-Title': 'Financial Dashboard'
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'openai/gpt-3.5-turbo', // Dùng model của OpenAI qua OpenRouter
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
