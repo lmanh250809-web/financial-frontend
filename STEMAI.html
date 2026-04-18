@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>🏆 Trạm số 11 · What‑if + OpenAI Chatbot</title>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Toàn bộ CSS giữ nguyên của bạn */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', sans-serif; }
+    body { background:#f0f4f9; min-height:100vh; padding:24px 20px; display:flex; justify-content:center; align-items:flex-start; transition: background 0.3s; }
+    body.achieved { background: linear-gradient(145deg, #e3f2e9, #d4e8dc); }
+    .dashboard { max-width:1440px; width:100%; display:flex; flex-direction:column; gap:24px; }
+    .dashboard-header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; }
+    .header-title h1 { font-weight:700; font-size:2.2rem; color:#0a2540; display:flex; align-items:center; gap:12px; }
+    .badge-pro { background:linear-gradient(135deg,#1e4b8a,#2a6faf); color:white; padding:6px 18px; border-radius:40px; font-size:0.9rem; font-weight:600; box-shadow:0 6px 12px rgba(0,40,80,0.1); }
+    .date-badge { background:white; padding:10px 20px; border-radius:40px; box-shadow:0 6px 14px rgba(0,0,0,0.02); color:#1e3a5f; font-weight:500; border:1px solid #e2eaf2; }
+    .grid-2col { display:grid; grid-template-columns:1.1fr 0.9fr; gap:24px; }
+    .grid-3col { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+    .card { background:rgba(255,255,255,0.85); backdrop-filter:blur(10px); border-radius:32px; padding:24px 26px; box-shadow:0 20px 35px -8px rgba(0,20,50,0.08), inset 0 0 0 1px rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.6); transition: box-shadow 0.3s; }
+    .card.achieved-card { box-shadow:0 0 0 4px #2ecc7140, 0 20px 35px -8px rgba(0,20,50,0.08); }
+    .card-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+    .card-header i { font-size:1.6rem; color:#1e6f9f; background:#e4f0fa; padding:10px; border-radius:18px; }
+    .card-header h3 { font-weight:700; color:#0a2540; font-size:1.4rem; }
+    .input-group { display:flex; flex-direction:column; gap:16px; }
+    .input-row { display:flex; flex-direction:column; gap:6px; }
+    .input-row label { font-weight:600; color:#2c4e6e; font-size:0.9rem; }
+    .input-row input, .input-row select { padding:14px 18px; border:1.5px solid #dae2ed; border-radius:22px; font-size:1rem; background:white; }
+    .input-row input:focus, .input-row select:focus { border-color:#1e6f9f; outline:none; box-shadow:0 0 0 4px rgba(30,111,159,0.12); }
+    .btn-primary { background:linear-gradient(145deg,#0a2540,#123b60); color:white; border:none; padding:16px 24px; border-radius:48px; font-weight:700; font-size:1.1rem; cursor:pointer; box-shadow:0 16px 24px -8px #0a254070; border:1px solid #2c5a7a; }
+    .btn-secondary { background:white; color:#0a2540; border:1.5px solid #c2d6e8; padding:14px 20px; border-radius:40px; font-weight:600; cursor:pointer; }
+    .stat-value-large { font-size:2.5rem; font-weight:800; color:#0a2540; }
+    .progress-bar-bg { height:12px; background:#dee7ef; border-radius:40px; overflow:hidden; }
+    .progress-fill { height:100%; background:linear-gradient(90deg,#1f8cad,#0f4c75); width:0%; border-radius:40px; transition:width 0.3s; }
+    .timeline-item { display:flex; align-items:center; gap:16px; padding:14px 0; border-bottom:1px solid #e0eaf3; }
+    .timeline-marker { width:16px; height:16px; border-radius:16px; background:#1e6f9f; box-shadow:0 0 0 4px #b5d8ff; }
+    .bank-compact { display:flex; justify-content:space-between; background:#f4fafd; padding:14px 18px; border-radius:24px; margin-bottom:8px; }
+    .level-panel { background:linear-gradient(105deg,#d9e9fa,#ecf3fb); border-radius:28px; padding:20px 24px; }
+    .insight-box { background:#eaf1fb; border-radius:20px; padding:16px 20px; margin-top:16px; border-left:6px solid #1e6f9f; }
+    .currency-input { text-align:right; }
+    .validation-message { color:#c0392b; font-size:0.85rem; margin-top:4px; min-height:20px; }
+    .toast-congrats { background:#1b5e20; color:white; padding:12px 20px; border-radius:40px; display:inline-block; animation: pulseGlow 1.5s infinite; }
+    @keyframes pulseGlow { 0%{box-shadow:0 0 0 0 #81c78480;} 50%{box-shadow:0 0 12px 6px #a5d6a7;} 100%{box-shadow:0 0 0 0 #81c78480;} }
+    
+    .help-btn { position:fixed; bottom:24px; right:24px; background:#1e6f9f; color:white; width:56px; height:56px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 12px 20px rgba(0,0,0,0.2); cursor:pointer; z-index:9995; border:2px solid white; }
+    .settings-btn { position:fixed; bottom:24px; right:96px; background:#2c3e50; color:white; width:56px; height:56px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; box-shadow:0 12px 20px rgba(0,0,0,0.2); cursor:pointer; z-index:9995; border:2px solid white; }
+
+    .tour-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(2px); z-index:9998; }
+    .tour-highlight { position:relative; z-index:10000 !important; box-shadow:0 0 0 6px rgba(30,111,159,0.5),0 0 20px 4px #1e6f9f !important; border-radius:24px !important; }
+    .tour-tooltip { position:fixed; z-index:10001; background:white; border-radius:32px; padding:24px 28px; max-width:360px; box-shadow:0 30px 50px rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.5); backdrop-filter:blur(4px); color:#0a2540; }
+    .tour-tooltip h4 { font-size:1.4rem; margin-bottom:12px; color:#1e6f9f; }
+    .tour-btn { background:#eef3f9; border:none; padding:12px 20px; border-radius:40px; font-weight:600; cursor:pointer; }
+    .tour-btn-primary { background:#1e6f9f; color:white; }
+    .tour-skip { color:#6c8da8; background:transparent; }
+    .tour-dot { width:8px; height:8px; background:#cbdae6; border-radius:10px; display:inline-block; margin:0 3px; }
+    .tour-dot.active { background:#1e6f9f; width:20px; }
+
+    .slider-container { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+    .slider-container input { width:100%; }
+
+    .chatbot-container { position:fixed; bottom:90px; right:24px; width:380px; background:white; border-radius:28px; box-shadow:0 20px 40px rgba(0,0,0,0.2); z-index:9996; overflow:hidden; display:none; flex-direction:column; border:1px solid #d0e0ee; }
+    .chatbot-header { background:#1e6f9f; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .chatbot-messages { height:340px; overflow-y:auto; padding:16px; background:#f9fcff; display:flex; flex-direction:column; gap:12px; }
+    .chat-message { max-width:85%; padding:12px 16px; border-radius:22px; font-size:0.95rem; line-height:1.4; }
+    .chat-message.user { align-self:flex-end; background:#1e6f9f; color:white; border-bottom-right-radius:6px; }
+    .chat-message.bot { align-self:flex-start; background:#e4edf5; color:#0a2540; border-bottom-left-radius:6px; }
+    .chatbot-input { display:flex; padding:12px; border-top:1px solid #d0e0ee; background:white; }
+    .chatbot-input input { flex:1; padding:12px 16px; border:1px solid #dae2ed; border-radius:40px; outline:none; }
+    .chatbot-input button { background:#1e6f9f; color:white; border:none; width:48px; height:48px; border-radius:40px; margin-left:8px; cursor:pointer; }
+    .toggle-chat-btn { position:fixed; bottom:24px; right:168px; background:#0a2540; color:white; width:56px; height:56px; border-radius:30px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; box-shadow:0 12px 20px rgba(0,0,0,0.2); cursor:pointer; z-index:9997; border:2px solid white; }
+
+    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:10002; display:none; align-items:center; justify-content:center; }
+    .modal-content { background:white; border-radius:32px; padding:28px; max-width:420px; width:90%; box-shadow:0 30px 50px rgba(0,0,0,0.3); }
+    .modal-content h3 { margin-bottom:20px; color:#0a2540; }
+    .modal-content input { width:100%; padding:14px; border-radius:24px; border:1px solid #dae2ed; margin-bottom:20px; }
+    .modal-actions { display:flex; gap:12px; justify-content:flex-end; }
+
+    @media (max-width:1000px) { .grid-2col { grid-template-columns:1fr; } .grid-3col { grid-template-columns:repeat(2,1fr); } }
+    @media (max-width:600px) { .grid-3col { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body id="mainBody">
+<div class="dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-title">
+      <h1><i class="fas fa-chart-pie" style="color:#1e4b8a;"></i> Trạm số 11 <span class="badge-pro"><i class="fas fa-bolt"></i> PRO + AI</span></h1>
+      <p style="color:#3a5e7e; margin-top:6px; font-weight:500;">Theo dõi mục tiêu · Lãi kép · Chatbot OpenAI</p>
+    </div>
+    <div class="date-badge"><i class="far fa-calendar-alt"></i> <span id="currentDate"></span></div>
+  </div>
+
+  <!-- INPUT & TỔNG QUAN -->
+  <div class="grid-2col">
+    <div class="card" id="inputCard">
+      <div class="card-header"><i class="fas fa-sliders-h"></i><h3>Thiết lập mục tiêu</h3></div>
+      <div class="input-group">
+        <div class="input-row"><label><i class="fas fa-bullseye"></i> Mục tiêu (VND)</label><input type="text" id="target" class="currency-input" placeholder="200.000.000"></div>
+        <div class="input-row"><label><i class="fas fa-piggy-bank"></i> Tiết kiệm / tháng</label><input type="text" id="monthlySave" class="currency-input" placeholder="3.500.000"></div>
+        <div class="input-row"><label><i class="fas fa-university"></i> Ngân hàng</label><select id="bankSelect"><option value="6.0">BIDV (6.0%)</option><option value="5.8">Agribank (5.8%)</option><option value="6.2">VietinBank (6.2%)</option><option value="7.0">ABBank (7.0%)</option><option value="6.0">Vietcombank (6.0%)</option><option value="6.8" selected>Techcombank (6.8%)</option><option value="7.2">MB Bank (7.2%)</option></select></div>
+        <div class="input-row"><label><i class="fas fa-percent"></i> Lãi suất (%/năm)</label><input type="number" id="interestRate" value="6.8" step="0.1" min="0"></div>
+        <div class="input-row"><label><i class="fas fa-calendar-alt"></i> Thời gian (tháng)</label><input type="number" id="months" value="48" step="1" min="1"></div>
+        <div class="input-row"><label><i class="fas fa-fire"></i> Lạm phát (%/năm)</label><input type="number" id="inflationRate" value="3.2" step="0.1" min="0"></div>
+        <div style="display:flex; gap:12px; margin-top:8px;">
+          <button class="btn-secondary" id="reverseCalcBtn"><i class="fas fa-calculator"></i> Tính ngược</button>
+          <button class="btn-primary" id="calculateBtn"><i class="fas fa-sync-alt"></i> Cập nhật</button>
+        </div>
+        <div id="validationMessage" class="validation-message"></div>
+      </div>
+    </div>
+    <div class="card" id="statsCard">
+      <div class="card-header"><i class="fas fa-chart-bar"></i><h3>Tổng quan & tiến độ</h3></div>
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div style="display:flex; justify-content:space-between;">
+          <div><div style="color:#4a6f8f;">Tổng tích lũy (CSN)</div><div class="stat-value-large" id="compoundFV">—</div></div>
+          <div><div style="color:#4a6f8f;">Mục tiêu sau LP</div><div class="stat-value-large" id="inflatedTarget">—</div></div>
+        </div>
+        <div class="progress-bar-container"><div style="display:flex; justify-content:space-between; font-weight:600;"><span>📊 Tiến độ</span><span id="progressPercent">0%</span></div><div class="progress-bar-bg"><div class="progress-fill" id="progressFill"></div></div></div>
+        <div><div style="font-weight:600; margin-bottom:12px;"><i class="far fa-clock"></i> Mốc thời gian</div><div id="timelineContainer">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME + BANK + WHAT‑IF -->
+  <div class="grid-3col">
+    <div class="card level-panel">
+      <div class="card-header"><i class="fas fa-trophy"></i><h3>Cấp độ chinh phục</h3></div>
+      <div style="display:flex; align-items:center; gap:18px;"><div style="font-size:3.5rem;" id="levelIcon">💰</div><div><div style="font-weight:800; font-size:1.5rem;" id="levelTitle">Level 1</div><div style="color:#1e4b6e;" id="levelDesc">Bắt đầu tiết kiệm</div></div></div>
+      <div class="progress-bar-container" style="margin-top:20px;"><div class="progress-bar-bg"><div class="progress-fill" id="levelProgressFill"></div></div></div>
+      <div id="gamificationMessage" style="margin-top:16px;"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><i class="fas fa-university"></i><h3>So sánh ngân hàng</h3></div>
+      <div id="bankComparisonContainer">—</div>
+      <p style="margin-top:12px; font-size:0.85rem; color:#46688a;"><i class="fas fa-info-circle"></i> Dựa trên gửi đều hàng tháng</p>
+    </div>
+    <!-- WHAT‑IF CARD -->
+    <div class="card">
+      <div class="card-header"><i class="fas fa-sliders-h"></i><h3>Mô phỏng What‑if</h3></div>
+      <div class="input-group">
+        <div class="slider-container">
+          <label>🏦 Lãi suất (%/năm) <span id="whatIfRateVal">6.8%</span></label>
+          <input type="range" id="whatIfRate" min="0" max="15" step="0.1" value="6.8">
+        </div>
+        <div class="slider-container">
+          <label>📉 Lạm phát (%/năm) <span id="whatIfInfVal">3.2%</span></label>
+          <input type="range" id="whatIfInf" min="0" max="10" step="0.1" value="3.2">
+        </div>
+        <div class="slider-container">
+          <label>💰 Tiết kiệm/tháng <span id="whatIfSaveVal">3.500.000</span></label>
+          <input type="range" id="whatIfSave" min="0" max="10000000" step="100000" value="3500000">
+        </div>
+        <div id="whatIfInsight" class="insight-box" style="margin-top:8px; font-size:0.95rem;">Kéo slider để xem tác động.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BIỂU ĐỒ CHÍNH + MÔ PHỎNG -->
+  <div class="grid-2col">
+    <div class="card" id="chartCard">
+      <div class="card-header"><i class="fas fa-chart-line"></i><h3>Hành trình tích lũy (CSC vs CSN)</h3></div>
+      <canvas id="savingsChart" style="max-height:250px;"></canvas>
+      <div class="insight-box" id="chartInsight">Vui lòng nhập đầy đủ thông tin và nhấn "Cập nhật".</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><i class="fas fa-robot"></i><h3>Mô phỏng đa kịch bản</h3></div>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <button class="scenario-btn active" data-scenario="base" style="padding:8px 16px; border-radius:30px; border:1px solid #c2d6e8; background:white;">Hiện tại</button>
+        <button class="scenario-btn" data-scenario="optimistic" style="padding:8px 16px; border-radius:30px; border:1px solid #c2d6e8; background:white;">Lạc quan</button>
+        <button class="scenario-btn" data-scenario="pessimistic" style="padding:8px 16px; border-radius:30px; border:1px solid #c2d6e8; background:white;">Bi quan</button>
+      </div>
+      <canvas id="scenarioChart" style="max-height:220px;"></canvas>
+    </div>
+  </div>
+
+  <!-- REVERSE CALC -->
+  <div class="card" style="background:#d4e7f5;" id="reverseCalcCard">
+    <div style="display:flex; align-items:center; gap:20px;">
+      <i class="fas fa-arrow-left" style="font-size:2rem;"></i>
+      <div><div style="font-weight:600;">Kế hoạch tiết kiệm ngược</div><div style="font-size:1.8rem; font-weight:700;" id="reverseResultText">Nhập mục tiêu, thời gian, lãi suất</div></div>
+      <button id="applyReverseBtn" style="margin-left:auto; background:#0a2540; color:white; border:none; padding:10px 20px; border-radius:40px; display:none;">Áp dụng</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOUR ELEMENTS -->
+<div id="tourOverlay" class="tour-overlay" style="display: none;"></div>
+<div id="tourTooltip" class="tour-tooltip" style="display: none;"></div>
+<div class="help-btn" id="helpButton" title="Xem hướng dẫn"><i class="fas fa-question"></i></div>
+<div class="settings-btn" id="settingsButton" title="Cài đặt API Key" style="display:none;"><i class="fas fa-key"></i></div>
+
+<!-- CHATBOT -->
+<div class="toggle-chat-btn" id="toggleChatBtn"><i class="fas fa-comment-dots"></i></div>
+<div class="chatbot-container" id="chatbotContainer">
+  <div class="chatbot-header" id="chatbotHeader">
+    <span><i class="fas fa-robot"></i> Trợ lý AI (OpenAI)</span>
+    <i class="fas fa-chevron-down"></i>
+  </div>
+  <div class="chatbot-messages" id="chatMessages">
+    <div class="chat-message bot">👋 Chào bạn! Tôi là trợ lý tài chính thông minh, được hỗ trợ bởi OpenAI. Hãy hỏi tôi về kế hoạch của bạn!</div>
+  </div>
+  <div class="chatbot-input">
+    <input type="text" id="chatInput" placeholder="Nhập câu hỏi...">
+    <button id="sendChatBtn"><i class="fas fa-paper-plane"></i></button>
+  </div>
+</div>
+
+<script>
+  (function(){
+    "use strict";
+    // ---------- UTILS ----------
+    const formatVND = (v) => new Intl.NumberFormat('vi-VN', {style:'currency', currency:'VND', maximumFractionDigits:0}).format(v);
+    const parseNumberFromCurrency = (str) => parseInt(str.replace(/[^\d]/g, ''), 10) || 0;
+    const formatNumberWithDots = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const formatCurrencyWithSuffix = (num) => formatNumberWithDots(num) + ' VND';
+
+    function setupCurrencyInput(el) {
+      let raw = parseNumberFromCurrency(el.value);
+      const refresh = () => {
+        if (document.activeElement === el) el.value = raw === 0 ? '' : raw.toString();
+        else el.value = raw === 0 ? '' : formatCurrencyWithSuffix(raw);
+      };
+      el.addEventListener('input', (e) => {
+        const cursor = el.selectionStart, oldLen = el.value.length;
+        raw = parseNumberFromCurrency(el.value);
+        if (document.activeElement === el) el.value = raw === 0 ? '' : raw.toString();
+        else el.value = raw === 0 ? '' : formatCurrencyWithSuffix(raw);
+        const newLen = el.value.length;
+        el.setSelectionRange(Math.max(0, cursor + newLen - oldLen), Math.max(0, cursor + newLen - oldLen));
+      });
+      el.addEventListener('focus', () => { raw = parseNumberFromCurrency(el.value); el.value = raw === 0 ? '' : raw.toString(); el.setSelectionRange(el.value.length, el.value.length); });
+      el.addEventListener('blur', () => { raw = parseNumberFromCurrency(el.value); el.value = raw === 0 ? '' : formatCurrencyWithSuffix(raw); if (window.autoUpdate) window.autoUpdate(); });
+      refresh();
+    }
+    document.querySelectorAll('.currency-input').forEach(setupCurrencyInput);
+    document.getElementById('currentDate').textContent = new Date().toLocaleDateString('vi-VN', {year:'numeric', month:'long', day:'numeric'});
+
+    // ---------- DOM ----------
+    const targetInput = document.getElementById('target'), monthlySaveInput = document.getElementById('monthlySave');
+    const interestRateInput = document.getElementById('interestRate'), monthsInput = document.getElementById('months');
+    const inflationInput = document.getElementById('inflationRate');
+    const bankSelect = document.getElementById('bankSelect'), calcBtn = document.getElementById('calculateBtn');
+    const reverseCalcBtn = document.getElementById('reverseCalcBtn'), applyReverseBtn = document.getElementById('applyReverseBtn');
+    const compoundFVSpan = document.getElementById('compoundFV'), inflatedTargetSpan = document.getElementById('inflatedTarget');
+    const progressPercentSpan = document.getElementById('progressPercent'), progressFillDiv = document.getElementById('progressFill');
+    const bankComparisonContainer = document.getElementById('bankComparisonContainer');
+    const timelineContainer = document.getElementById('timelineContainer');
+    const levelIcon = document.getElementById('levelIcon'), levelTitle = document.getElementById('levelTitle'), levelDesc = document.getElementById('levelDesc');
+    const levelProgressFill = document.getElementById('levelProgressFill'), gamificationMessageDiv = document.getElementById('gamificationMessage');
+    const reverseResultText = document.getElementById('reverseResultText');
+    const chartInsight = document.getElementById('chartInsight'), validationMsg = document.getElementById('validationMessage');
+    const mainBody = document.getElementById('mainBody'), inputCard = document.getElementById('inputCard');
+    const statsCard = document.getElementById('statsCard'), chartCard = document.getElementById('chartCard');
+
+    const whatIfRate = document.getElementById('whatIfRate'), whatIfInf = document.getElementById('whatIfInf'), whatIfSave = document.getElementById('whatIfSave');
+    const whatIfRateVal = document.getElementById('whatIfRateVal'), whatIfInfVal = document.getElementById('whatIfInfVal'), whatIfSaveVal = document.getElementById('whatIfSaveVal');
+    const whatIfInsight = document.getElementById('whatIfInsight');
+
+    let mainChart, scenarioChart;
+    const ctxMain = document.getElementById('savingsChart').getContext('2d');
+    const ctxScenario = document.getElementById('scenarioChart').getContext('2d');
+
+    const getVal = (el) => parseNumberFromCurrency(el.value);
+    const computeCompoundFV = (P, rate, months) => { const r = rate/100/12; return r===0 ? P*months : P * ((Math.pow(1+r, months)-1)/r); };
+    const computeInflatedTarget = (target, infl, months) => target * Math.pow(1+infl/100, months/12);
+    const computeRequiredMonthly = (FV, rate, months) => { const r = rate/100/12; return r===0 ? FV/months : FV * r / (Math.pow(1+r, months)-1); };
+    const forceBlurAll = () => document.querySelectorAll('.currency-input').forEach(i => i.blur());
+
+    function getCurrentContext() {
+      return {
+        target: getVal(targetInput),
+        monthlySave: getVal(monthlySaveInput),
+        interestRate: parseFloat(interestRateInput.value)||0,
+        months: parseFloat(monthsInput.value)||1,
+        inflation: parseFloat(inflationInput.value)||0,
+        currentFV: computeCompoundFV(getVal(monthlySaveInput), parseFloat(interestRateInput.value)||0, parseFloat(monthsInput.value)||1),
+        surplus: 0
+      };
+    }
+
+    // ---------- WHAT‑IF & UPDATE ----------
+    function updateWhatIfInsight() {
+      const P = parseFloat(whatIfSave.value) || 3500000;
+      const rate = parseFloat(whatIfRate.value) || 6.8;
+      const infl = parseFloat(whatIfInf.value) || 3.2;
+      const months = parseFloat(monthsInput.value) || 48;
+      const target = getVal(targetInput) || 200000000;
+      const fv = computeCompoundFV(P, rate, months);
+      const targetInf = computeInflatedTarget(target, infl, months);
+      const diff = fv - targetInf;
+      const achieveMonth = (() => { const r = rate/100/12; if (r===0) return targetInf/P; const rhs = 1 + targetInf * r / P; return rhs>0 ? Math.ceil(Math.log(rhs)/Math.log(1+r)) : null; })();
+      let msg = `Với LS ${rate}%, LP ${infl}%, TK ${formatVND(P)}: `;
+      if (diff >= 0) msg += `đạt mục tiêu, dư ${formatVND(diff)}. `;
+      else msg += `thiếu ${formatVND(-diff)}. `;
+      if (achieveMonth && achieveMonth <= months) msg += `Đạt vào tháng ${achieveMonth}.`;
+      else if (achieveMonth) msg += `Cần ${achieveMonth} tháng để đạt (trễ ${achieveMonth - months} tháng).`;
+      whatIfInsight.innerText = msg;
+      updateMainChartWithParams(P, rate, infl);
+    }
+
+    function updateMainChartWithParams(P, annualRate, inflation) {
+      const target = getVal(targetInput) || 200000000;
+      const months = parseFloat(monthsInput.value) || 48;
+      const inflatedTarget = computeInflatedTarget(target, inflation, months);
+      const compoundFV = computeCompoundFV(P, annualRate, months);
+      const simpleSum = P * months;
+      const progress = inflatedTarget>0 ? (compoundFV/inflatedTarget)*100 : 0;
+      const progressClamped = Math.min(progress, 100);
+      const isAchieved = compoundFV >= inflatedTarget;
+
+      compoundFVSpan.textContent = formatVND(compoundFV);
+      inflatedTargetSpan.textContent = formatVND(inflatedTarget);
+      progressPercentSpan.textContent = progressClamped.toFixed(1)+'%';
+      progressFillDiv.style.width = progressClamped+'%';
+
+      let level = progressClamped>=100 ? 3 : (progressClamped>=50 ? 2 : 1);
+      levelIcon.textContent = level===1 ? '💰' : (level===2 ? '📈' : '🏆');
+      levelTitle.textContent = `Level ${level} · ${level===1?'Bắt đầu':(level===2?'Vững bước':'Hoàn thành!')}`;
+      levelProgressFill.style.width = Math.min(progressClamped, 100)+'%';
+      gamificationMessageDiv.innerHTML = isAchieved ? '<div class="toast-congrats"><i class="fas fa-crown"></i> Chúc mừng! Đạt mục tiêu!</div>' : '';
+
+      const labels = [], simpleData = [], compoundData = [], targetLine = [];
+      const monthlyRate = annualRate / 100 / 12;
+      for (let i = 0; i <= months; i++) {
+        labels.push(i.toString()); simpleData.push(P * i);
+        compoundData.push(monthlyRate===0 ? P*i : P*((Math.pow(1+monthlyRate, i)-1)/monthlyRate));
+        targetLine.push(inflatedTarget);
+      }
+      if (mainChart) mainChart.destroy();
+      mainChart = new Chart(ctxMain, { type: 'line', data: { labels, datasets: [
+        { label: 'CSC', data: simpleData, borderColor: '#b0c7db', borderDash: [5,3] },
+        { label: 'CSN', data: compoundData, borderColor: '#1e6f9f', borderWidth: 4 },
+        { label: 'Mục tiêu', data: targetLine, borderColor: '#e74c3c', borderDash: [8,6] }
+      ]}, options: { responsive: true, plugins: { tooltip: { callbacks: { label: (ctx) => formatVND(ctx.raw) } } } } });
+
+      const achieveMonth = (() => { const r = annualRate/100/12; if (r===0) return inflatedTarget/P; const rhs = 1 + inflatedTarget * r / P; return rhs>0 ? Math.ceil(Math.log(rhs)/Math.log(1+r)) : null; })();
+      let insight = `✨ Sau ${months} tháng, lãi kép giúp bạn tăng thêm ${formatVND(compoundFV - simpleSum)}. `;
+      if (achieveMonth && achieveMonth <= months) insight += `Đạt mục tiêu vào tháng ${achieveMonth}. `;
+      else if (achieveMonth) insight += `Cần ${achieveMonth} tháng để đạt (trễ ${achieveMonth - months} tháng). `;
+      chartInsight.innerHTML = insight;
+
+      updateBankComparison(P, annualRate, months);
+      updateTimeline(P, annualRate, months);
+    }
+
+    function updateBankComparison(P, rate, months) {
+      const banks = [
+        { name: "BIDV", rate: 6.0 }, { name: "Agribank", rate: 5.8 }, { name: "VietinBank", rate: 6.2 },
+        { name: "ABBank", rate: 7.0 }, { name: "Vietcombank", rate: 6.0 }, { name: "Techcombank", rate: 6.8 }, { name: "MB Bank", rate: 7.2 }
+      ];
+      bankComparisonContainer.innerHTML = banks.map(b => {
+        const fv = computeCompoundFV(P, b.rate, months);
+        return `<div class="bank-compact"><span><i class="fas fa-university"></i> ${b.name} (${b.rate}%)</span><strong>${formatVND(fv)}</strong></div>`;
+      }).join('');
+    }
+
+    function updateTimeline(P, rate, months) {
+      const milestones = [0.25,0.5,0.75,1].map(m => Math.round(m*months)).filter((v,i,a)=> v>0 && a.indexOf(v)===i);
+      timelineContainer.innerHTML = milestones.map(m => {
+        const fv = computeCompoundFV(P, rate, m);
+        return `<div class="timeline-item"><div class="timeline-marker"></div><span>Tháng ${m}: ${formatVND(fv)}</span></div>`;
+      }).join('') || '<div class="timeline-item">Chưa có dữ liệu</div>';
+    }
+
+    function updateAll() {
+      forceBlurAll();
+      const target = getVal(targetInput), P = getVal(monthlySaveInput), annualRate = parseFloat(interestRateInput.value)||0;
+      const months = parseFloat(monthsInput.value)||1, inflation = parseFloat(inflationInput.value)||0;
+      if (!target||target<=0||!P||P<=0||months<1) { validationMsg.textContent = '⚠️ Vui lòng nhập đầy đủ.'; return; }
+      validationMsg.textContent = '';
+      whatIfRate.value = annualRate; whatIfInf.value = inflation; whatIfSave.value = P;
+      whatIfRateVal.textContent = annualRate.toFixed(1)+'%'; whatIfInfVal.textContent = inflation.toFixed(1)+'%'; whatIfSaveVal.textContent = formatNumberWithDots(P);
+      updateMainChartWithParams(P, annualRate, inflation);
+      updateScenarioChart('base');
+    }
+
+    function updateScenarioChart(active) {
+      const P = getVal(monthlySaveInput); if (!P) return;
+      const months = parseFloat(monthsInput.value)||1, baseRate = parseFloat(interestRateInput.value)||0;
+      const target = getVal(targetInput); if (!target) return;
+      const baseTarget = computeInflatedTarget(target, parseFloat(inflationInput.value)||0, months);
+      const labels=[], baseS=[], optS=[], pessS=[];
+      for(let i=0;i<=months;i++) { labels.push(i); baseS.push(computeCompoundFV(P, baseRate, i)); optS.push(computeCompoundFV(P,9.0,i)); pessS.push(computeCompoundFV(P,4.0,i)); }
+      if(scenarioChart) scenarioChart.destroy();
+      scenarioChart = new Chart(ctxScenario, { type:'line', data:{labels, datasets:[
+        {label:'Hiện tại', data:baseS, borderColor:'#1e6f9f', borderWidth:active==='base'?4:2},
+        {label:'Lạc quan', data:optS, borderColor:'#2ecc71', borderWidth:active==='optimistic'?4:2},
+        {label:'Bi quan', data:pessS, borderColor:'#e67e22', borderWidth:active==='pessimistic'?4:2},
+        {label:'Mục tiêu', data:new Array(labels.length).fill(baseTarget), borderColor:'#e74c3c', borderDash:[8,6]}
+      ]}});
+      document.querySelectorAll('.scenario-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelector(`[data-scenario="${active}"]`).classList.add('active');
+    }
+
+    function performReverse() {
+      forceBlurAll();
+      const target = getVal(targetInput), rate = parseFloat(interestRateInput.value)||0, months = parseFloat(monthsInput.value)||1;
+      if (!target||target<=0||months<1) return;
+      const pmt = computeRequiredMonthly(target, rate, months);
+      reverseResultText.textContent = `Bạn cần tiết kiệm: ${formatVND(pmt)}`;
+      applyReverseBtn.style.display = 'inline-block';
+      applyReverseBtn.onclick = () => { monthlySaveInput.value = formatCurrencyWithSuffix(Math.round(pmt)); monthlySaveInput.dispatchEvent(new Event('input')); monthlySaveInput.blur(); updateAll(); };
+    }
+
+    window.autoUpdate = updateAll;
+    calcBtn.addEventListener('click', (e) => { e.preventDefault(); updateAll(); });
+    reverseCalcBtn.addEventListener('click', (e) => { e.preventDefault(); performReverse(); });
+    bankSelect.addEventListener('change', () => { interestRateInput.value = bankSelect.value; updateAll(); });
+    document.querySelectorAll('.scenario-btn').forEach(b => b.addEventListener('click', (e) => updateScenarioChart(e.currentTarget.dataset.scenario)));
+
+    whatIfRate.addEventListener('input', ()=> { whatIfRateVal.textContent = whatIfRate.value+'%'; updateWhatIfInsight(); });
+    whatIfInf.addEventListener('input', ()=> { whatIfInfVal.textContent = whatIfInf.value+'%'; updateWhatIfInsight(); });
+    whatIfSave.addEventListener('input', ()=> { whatIfSaveVal.textContent = formatNumberWithDots(whatIfSave.value); updateWhatIfInsight(); });
+
+    // ---------- ONBOARDING TOUR (HOÀN CHỈNH) ----------
+    const TOUR_KEY = 'financial_dashboard_tour_done';
+    const tourOverlay = document.getElementById('tourOverlay');
+    const tourTooltip = document.getElementById('tourTooltip');
+    const steps = [
+      { selector: '#target', title: '🎯 Mục tiêu tài chính', desc: 'Nhập số tiền bạn muốn đạt được.' },
+      { selector: '#monthlySave', title: '💰 Tiết kiệm hàng tháng', desc: 'Số tiền bạn có thể để dành mỗi tháng.' },
+      { selector: '#calculateBtn', title: '🚀 Cập nhật kế hoạch', desc: 'Nhấn để hệ thống tính toán lãi kép.' },
+      { selector: '#chartCard', title: '📈 Biểu đồ tăng trưởng', desc: 'Xem hành trình tích lũy của bạn.' }
+    ];
+    let currentStep = 0, originalOverflow = '';
+    function positionTooltip(targetEl) {
+      const rect = targetEl.getBoundingClientRect(), tooltipRect = tourTooltip.getBoundingClientRect();
+      let left = rect.left + rect.width/2 - tooltipRect.width/2;
+      left = Math.max(12, Math.min(left, window.innerWidth - tooltipRect.width - 12));
+      let top = rect.bottom + 16;
+      if (top + tooltipRect.height > window.innerHeight - 20) top = rect.top - tooltipRect.height - 16;
+      if (top < 20) top = 20;
+      tourTooltip.style.left = left + 'px'; tourTooltip.style.top = top + 'px';
+    }
+    function endTour() {
+      tourOverlay.style.display = 'none'; tourTooltip.style.display = 'none';
+      document.querySelector('.tour-highlight')?.classList.remove('tour-highlight');
+      document.body.style.overflow = originalOverflow;
+      localStorage.setItem(TOUR_KEY, 'true');
+    }
+    function showStep(index) {
+      document.querySelector('.tour-highlight')?.classList.remove('tour-highlight');
+      if (index >= steps.length) { endTour(); return; }
+      const step = steps[index], targetEl = document.querySelector(step.selector);
+      if (!targetEl) { currentStep++; showStep(currentStep); return; }
+      targetEl.classList.add('tour-highlight');
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const isLast = index === steps.length - 1;
+      tourTooltip.innerHTML = `<h4><i class="fas fa-info-circle"></i> ${step.title}</h4><p>${step.desc}</p>
+        <div class="tour-buttons"><div style="display:flex; gap:8px;">
+          <button class="tour-btn" id="tourPrev" ${index===0?'disabled':''}><i class="fas fa-chevron-left"></i> Trước</button>
+          <button class="tour-btn tour-btn-primary" id="tourNext">${isLast?'Hoàn tất':'Tiếp theo'}</button>
+        </div><button class="tour-btn tour-skip" id="tourSkip">Bỏ qua</button></div>
+        <div style="margin-top:16px; text-align:center;">${steps.map((_,i)=>`<span class="tour-dot ${i===index?'active':''}"></span>`).join('')}</div>`;
+      tourTooltip.style.display = 'block';
+      setTimeout(() => positionTooltip(targetEl), 20);
+      document.getElementById('tourPrev')?.addEventListener('click', ()=> { if(currentStep>0) showStep(--currentStep); });
+      document.getElementById('tourNext')?.addEventListener('click', ()=> { isLast ? endTour() : showStep(++currentStep); });
+      document.getElementById('tourSkip')?.addEventListener('click', endTour);
+    }
+    function startTour(ignoreStorage = false) {
+      if (!ignoreStorage && localStorage.getItem(TOUR_KEY)) return;
+      originalOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+      tourOverlay.style.display = 'block'; currentStep = 0; showStep(currentStep);
+    }
+    document.getElementById('helpButton').addEventListener('click', ()=> { localStorage.removeItem(TOUR_KEY); startTour(true); });
+    window.addEventListener('load', ()=> { setTimeout(()=> startTour(false), 800); });
+    window.addEventListener('resize', ()=> { const hl = document.querySelector('.tour-highlight'); if (hl && tourTooltip.style.display==='block') positionTooltip(hl); });
+
+    // ---------- CHATBOT (KẾT NỐI PROXY) ----------
+    const chatContainer = document.getElementById('chatbotContainer');
+    const toggleChatBtn = document.getElementById('toggleChatBtn');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendChatBtn = document.getElementById('sendChatBtn');
+    const PROXY_URL = 'https://tram-so-11.onrender.com/api/chat';
+
+    // Mở/đóng chatbot
+    toggleChatBtn.addEventListener('click', () => {
+      chatContainer.style.display = chatContainer.style.display === 'flex' ? 'none' : 'flex';
+    });
+    document.getElementById('chatbotHeader').addEventListener('click', () => {
+      chatContainer.style.display = 'none';
+    });
+
+    async function callOpenAI(userMessage) {
+      const context = getCurrentContext();
+      const formattedContext = {
+        target: formatVND(context.target),
+        monthlySave: formatVND(context.monthlySave),
+        interestRate: context.interestRate,
+        months: context.months,
+        inflation: context.inflation,
+        currentFV: formatVND(context.currentFV)
+      };
+      const response = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage, context: formattedContext })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Lỗi server');
+      return data.reply;
+    }
+
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+      chatMessages.innerHTML += `<div class="chat-message user">${text}</div>`;
+      chatInput.value = '';
+      try {
+        const reply = await callOpenAI(text);
+        chatMessages.innerHTML += `<div class="chat-message bot">${reply}</div>`;
+      } catch (err) {
+        chatMessages.innerHTML += `<div class="chat-message bot">❌ Lỗi: ${err.message}</div>`;
+      }
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    sendChatBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    // Khởi động
+    setTimeout(()=> updateAll(), 100);
+  })();
+</script>
+</body>
+</html>
