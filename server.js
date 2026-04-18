@@ -1,4 +1,3 @@
-// backend/server.js
 const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
@@ -10,10 +9,11 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY; // Đổi tên biến
+// Đọc biến môi trường OPENROUTER_API_KEY
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 if (!OPENROUTER_API_KEY) {
-  console.error('❌ Thiếu OPENROUTER_API_KEY trong file .env');
+  console.error('❌ Thiếu OPENROUTER_API_KEY trong biến môi trường');
   process.exit(1);
 }
 
@@ -31,11 +31,11 @@ Trả lời ngắn gọn, cụ thể, có số liệu. Nếu câu hỏi ngoài t
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://your-app.vercel.app', // Thay bằng URL frontend của bạn
+        'HTTP-Referer':'https://financial-frontend-cc7q.vercel.app/', // Thay bằng URL Vercel của bạn
         'X-Title': 'Financial Dashboard'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo', // Dùng model của OpenAI qua OpenRouter
+        model: 'openai/gpt-3.5-turbo',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: message }
@@ -54,5 +54,5 @@ Trả lời ngắn gọn, cụ thể, có số liệu. Nếu câu hỏi ngoài t
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Proxy server chạy tại http://localhost:${PORT}`);
+  console.log(`🚀 Server chạy tại cổng ${PORT}`);
 });
